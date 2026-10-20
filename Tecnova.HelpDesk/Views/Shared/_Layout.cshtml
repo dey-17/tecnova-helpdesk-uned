@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewBag.Title · Tecnova Help Desk</title>
+    <link rel="stylesheet" href="@Url.Content("~/Content/site.css")" />
+    <script src="@Url.Content("~/Scripts/shell.js")" defer></script>
+</head>
+<body>
+    <a class="skip-link" href="#contenido">Saltar al contenido</a>
+    <div class="app-shell">
+        <aside class="sidebar" aria-label="Barra lateral">
+            <a class="brand" href="#inicio" aria-label="Tecnova, ir al inicio"><span class="brand-mark" aria-hidden="true">T.</span><span>TECNOVA<small>HELP DESK</small></span></a>
+            <span class="nav-label">ESPACIO DE TRABAJO</span>
+            <nav aria-label="Menú principal">
+                <a class="nav-link" href="#inicio" aria-current="page"><span aria-hidden="true">⌂</span> Inicio <span class="nav-arrow" aria-hidden="true">↗</span></a>
+                <a class="nav-link" href="#servicio"><span aria-hidden="true">◇</span> Ruta de atención <span class="nav-arrow" aria-hidden="true">↗</span></a>
+            </nav>
+            <div class="sidebar-bottom"><span class="sidebar-line"></span><p>Un solo lugar.<br /><strong>Cada solicitud, en orden.</strong></p><small>Acceso a tickets aún no habilitado.</small></div>
+        </aside>
+        <div class="workspace">
+            <header class="topbar">
+                <div><span class="eyebrow">CENTRO DE SOPORTE</span><p>Tecnología al servicio de tu equipo.</p></div>
+                <span class="environment"><span aria-hidden="true"></span> Entorno local</span>
+            </header>
+            <main id="contenido" tabindex="-1">@RenderBody()</main>
+            <footer>Tecnova Help Desk <span>Soporte claro. Trabajo en equipo.</span></footer>
+        </div>
+    </div>
+    <div id="aviso" class="notice" role="status" aria-live="polite" aria-atomic="true" hidden>
+        <p id="aviso-texto"></p><button type="button" id="cerrar-aviso" aria-label="Cerrar mensaje">×</button>
+    </div>
+    <noscript><p class="no-script">Activa JavaScript para utilizar la navegación de paneles. Esta versión todavía no permite registrar tickets.</p></noscript>
+</body>
+</html>
