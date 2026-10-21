@@ -5,14 +5,19 @@
 <div class="app-shell"><aside class="sidebar"><a class="brand" href="@Url.Action("Panel")"><span class="brand-mark">T.</span><span>TECNOVA<small>HELP DESK</small></span></a><span class="nav-label">ESPACIO DE TRABAJO</span>
 <nav aria-label="Menú principal"><button class="nav-link" data-section="tickets" aria-current="page">Solicitudes</button>
 @if(Model.Admin){<button class="nav-link" data-section="empleados">Empleados</button>}
+@if(Model.Admin){<button class="nav-link" data-section="reportes">Reportes</button>}
+<button class="nav-link" data-section="cuenta">Mi cuenta</button>
 <button class="nav-link" id="salir">Cerrar sesión</button></nav><div class="sidebar-bottom"><strong>@Model.Nombre</strong><p>@Model.Rol</p></div></aside>
 <div class="workspace"><header class="topbar"><div><span class="eyebrow">PORTAL DE EMPLEADOS</span><p>Help Desk · Soporte interno</p></div><span>@Model.Nombre · @Model.Rol</span></header>
 <main id="portal">@Html.AntiForgeryToken()<div id="mensaje" role="status" aria-live="polite" tabindex="-1" hidden></div>
 <section id="seccion-tickets">@Html.Partial("_Tickets")</section>
+<section id="seccion-cuenta" hidden><h1>Mi cuenta</h1><p>@Model.Nombre · @Model.Rol</p><form id="clave-form" class="form-card"><label>Contraseña actual<input type="password" name="actual" required maxlength="128" autocomplete="current-password"/></label><label>Nueva contraseña<input type="password" name="nueva" required minlength="12" maxlength="128" autocomplete="new-password"/></label><p>Al cambiarla se cerrarán tus sesiones. Usa al menos 12 caracteres.</p><button type="submit" class="button-primary">Cambiar contraseña</button></form></section>
+@if(Model.Admin){<section id="seccion-reportes" hidden>@Html.Partial("_Reportes")</section>}
 @if(Model.Admin){<section id="seccion-empleados" hidden><h1>Empleados</h1><p>Administra las cuentas de acceso. Las bajas conservan sus tickets.</p><form id="empleado-form" class="form-card"><input type="hidden" name="id"/><input type="hidden" name="version"/><label>Nombre<input name="nombre" required minlength="2" maxlength="100"/></label><label>Correo<input type="email" name="email" required maxlength="254"/></label><label>Contraseña<input type="password" name="password" minlength="12" maxlength="128" autocomplete="new-password"/><small>Obligatoria al crear. Déjala vacía al editar para conservarla.</small></label><div class="actions"><button type="submit" class="button-primary">Guardar empleado</button><button type="button" id="cancelar-empleado" class="button-secondary">Limpiar formulario</button></div></form><div id="empleados-lista" class="list" aria-live="polite"></div></section>}
 </main></div></div><dialog id="confirmacion" aria-labelledby="confirmacion-titulo"><h2 id="confirmacion-titulo">Confirmar acción</h2><p id="confirmacion-texto"></p><div class="actions"><button type="button" id="confirmar-no" class="button-secondary">Cancelar</button><button type="button" id="confirmar-si" class="button-primary">Confirmar</button></div></dialog>
 <script src="@Url.Content("~/Scripts/portal.js")" defer></script>
 <script src="@Url.Content("~/Scripts/tickets.js")" defer></script>
 <script src="@Url.Content("~/Scripts/comentarios.js")" defer></script>
 <script src="@Url.Content("~/Scripts/soporte.js")" defer></script>
+<script src="@Url.Content("~/Scripts/reportes.js")" defer></script>
 </body></html>

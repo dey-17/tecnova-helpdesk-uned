@@ -2,8 +2,10 @@
     'use strict';
     const root=document.body.dataset.root||'';
     const token=()=>document.querySelector('[name="__RequestVerificationToken"]').value;
-    const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
+    const el=(tag,text,cls)=>{const n=document.createElement(tag);if(tag==='form')n.noValidate=true;if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
     const message=(text,error=false)=>{const n=document.getElementById('mensaje')||document.getElementById('mensaje-login');n.textContent=text;n.hidden=false;n.dataset.error=error;};
+    document.querySelectorAll('form').forEach(form=>form.noValidate=true);
+    document.addEventListener('submit',event=>{const form=event.target;if(!form.checkValidity()){event.preventDefault();event.stopImmediatePropagation();const invalid=form.querySelector(':invalid');message('Revisa los campos obligatorios y sus límites. '+(invalid?invalid.validationMessage:''),true);if(invalid)invalid.focus();}},true);
     async function request(path,data){
         const options={headers:{'X-Requested-With':'XMLHttpRequest'},credentials:'same-origin',cache:'no-store'};
         if(data){options.method='POST';const body=new URLSearchParams(data);body.set('__RequestVerificationToken',token());options.body=body;}
@@ -18,6 +20,7 @@
     if(login){login.addEventListener('submit',e=>{e.preventDefault();busy(login,async()=>{const r=await request(login.getAttribute('action'),new FormData(login));location.assign(r.url);});});return;}
     document.getElementById('salir').onclick=()=>busy(document.querySelector('nav'),async()=>{const r=await request('Cuenta/Salir',{});location.assign(r.url);});
     document.querySelectorAll('[data-section]').forEach(button=>button.onclick=()=>{
+        document.getElementById('mensaje').hidden=true;
         document.querySelectorAll('[id^="seccion-"]').forEach(section=>section.hidden=section.id!=='seccion-'+button.dataset.section);
         document.querySelectorAll('[data-section]').forEach(b=>b.removeAttribute('aria-current'));button.setAttribute('aria-current','page');
         if(button.dataset.section==='empleados')loadEmployees().catch(e=>message(e.message,true));
@@ -32,4 +35,6 @@
     }
     if(employeeForm){employeeForm.onsubmit=e=>{e.preventDefault();busy(employeeForm,async()=>{const result=await request('Empleados/Guardar',new FormData(employeeForm));employeeForm.reset();message(result.mensaje);await loadEmployees();});};document.getElementById('cancelar-empleado').onclick=()=>employeeForm.reset();}
     window.tecnova={request,busy,message,el,confirmAction};
+    const passwordForm=document.getElementById('clave-form');
+    passwordForm.onsubmit=e=>{e.preventDefault();busy(passwordForm,async()=>{const r=await request('Cuenta/CambiarClave',new FormData(passwordForm));location.assign(r.url);});};
 }());

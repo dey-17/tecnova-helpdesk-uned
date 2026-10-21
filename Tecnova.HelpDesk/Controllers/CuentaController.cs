@@ -28,5 +28,16 @@ namespace Tecnova.HelpDesk.Controllers
         }
         [HttpPost,ValidateAntiForgeryToken]
         public ActionResult Salir() { FormsAuthentication.SignOut(); Session.Abandon(); return Json(new {ok=true,url=Url.Action("Login")}); }
+        [Access,HttpPost,ValidateAntiForgeryToken]
+        public ActionResult CambiarClave(string actual,string nueva)
+        {
+            if(actual==null || actual.Length>128 || nueva==null || nueva.Length<12 || nueva.Length>128 || String.IsNullOrWhiteSpace(nueva))return Fail("La nueva contraseña debe tener entre 12 y 128 caracteres.");
+            var table=Db.Query("SELECT PasswordHash FROM Usuarios WHERE Id=@id",Db.P("@id",Actual.Id));
+            string previous=(string)table.Rows[0]["PasswordHash"];
+            if(!Passwords.Verify(actual,previous))return Fail("La contraseña actual no es correcta.");
+            int changed=Db.Execute("UPDATE Usuarios SET PasswordHash=@hash,SecurityStamp=NEWID() WHERE Id=@id AND PasswordHash=@anterior",Db.P("@hash",Passwords.Hash(nueva)),Db.P("@id",Actual.Id),Db.P("@anterior",previous));
+            if(changed==0)return Fail("La cuenta cambió. Inicia sesión de nuevo.",409);
+            FormsAuthentication.SignOut();return Json(new {ok=true,url=Url.Action("Login")});
+        }
     }
 }

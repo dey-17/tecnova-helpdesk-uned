@@ -9,6 +9,8 @@ packages/
 .env
 .env.*
 *.local.config
+*.local.txt
+Acceso*.txt
 *.mdf
 *.ldf
 *.bak

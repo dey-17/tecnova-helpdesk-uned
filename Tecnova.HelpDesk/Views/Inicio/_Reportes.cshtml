@@ -1,0 +1,4 @@
+<h1>Reportes de soporte</h1><p>Tickets creados en el periodo seleccionado. Las fechas se interpretan en UTC e incluyen ambos días.</p>
+<form id="reporte-form" class="filters form-card"><label>Desde<input type="date" name="desde" required/></label><label>Hasta<input type="date" name="hasta" required/></label><label>Estado<select name="estado"><option value="0">Todos</option><option value="1">Abierto</option><option value="2">En Proceso</option><option value="3">Resuelto</option><option value="4">Cerrado</option></select></label><button type="submit" class="button-primary">Generar reporte</button><button type="button" class="button-secondary" id="exportar-reporte" disabled>Descargar CSV</button></form>
+<div id="reporte-resultado" aria-live="polite"></div>
+<p class="muted">El promedio utiliza solo tickets con fecha de resolución. Incluye los cerrados que se resolvieron previamente. No mide tiempo de trabajo activo ni cumplimiento de SLA.</p>

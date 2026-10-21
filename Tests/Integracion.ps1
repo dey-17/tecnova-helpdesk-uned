@@ -41,10 +41,23 @@ try{
     $empleadoTecnova=Sesion "test-1-$sufijoTecnova@example.invalid"
     $otroTecnova=Sesion "test-2-$sufijoTecnova@example.invalid"
     $r=Api $adminTecnova 'Empleados/Listar'
+    $correoNuevoTecnova="test-alta-$sufijoTecnova@example.invalid"
+    [void](Api $adminTecnova 'Empleados/Guardar' @{nombre='Empleado de prueba';email=$correoNuevoTecnova;password=$passwordTecnova})
+    $idNuevoTecnova=SqlPrueba 'SELECT Id FROM Usuarios WHERE Email=@e' @{'@e'=$correoNuevoTecnova}
+    $idsTecnova.Add([int]$idNuevoTecnova)
+    [void](Api $adminTecnova 'Empleados/Guardar' @{nombre='Duplicado';email=$correoNuevoTecnova;password=$passwordTecnova} 409)
+    $nuevoEmpleadoTecnova=(Api $adminTecnova 'Empleados/Listar').datos|Where-Object Id -eq $idNuevoTecnova
+    [void](Api $adminTecnova 'Empleados/Guardar' @{id=$idNuevoTecnova;version=$nuevoEmpleadoTecnova.Version;nombre='Nombre actualizado';email=$correoNuevoTecnova;password=''})
+    [void](Api $empleadoTecnova 'Empleados/Guardar' @{nombre='No permitido';email='no@example.invalid';password=$passwordTecnova} 403)
+    $sinTokenTecnova=Invoke-WebRequest "$BaseUrl/Tickets/Crear" -Method Post -WebSession $empleadoTecnova.session -Headers @{'X-Requested-With'='XMLHttpRequest'} -Body @{Titulo='Sin token';Descripcion='Rechazar';Categoria='Hardware'} -SkipHttpErrorCheck
+    if([int]$sinTokenTecnova.StatusCode -ne 400){throw 'Fallo proteccion antifalsificacion'}
+    Write-Host 'PASS: alta/edicion de empleados, duplicados y antifalsificacion.'
     $nuevo=Api $empleadoTecnova 'Tickets/Crear' @{Titulo='Incidencia de prueba';Descripcion='Descripcion de prueba';Categoria='Hardware'}
     $ticketIdTecnova=$nuevo.id
     $detalle=(Api $empleadoTecnova "Tickets/Detalle?id=$ticketIdTecnova").datos
     [void](Api $otroTecnova "Tickets/Detalle?id=$ticketIdTecnova" $null 404)
+    $empleadoTecnova=Sesion "test-1-$sufijoTecnova@example.invalid"
+    if((Api $empleadoTecnova "Tickets/Detalle?id=$ticketIdTecnova").datos.Id -ne $ticketIdTecnova){throw 'Fallo persistencia entre sesiones'}
     [void](Api $empleadoTecnova 'Tickets/Editar' @{id=$ticketIdTecnova;version=$detalle.Version;Titulo='Incidencia editada';Descripcion='Descripcion corregida';Categoria='Software'})
     [void](Api $empleadoTecnova 'Tickets/Editar' @{id=$ticketIdTecnova;version=$detalle.Version;Titulo='Antiguo';Descripcion='No debe guardar';Categoria='Software'} 409)
     [void](Api $empleadoTecnova 'Tickets/Crear' @{Titulo=' ';Descripcion='Prueba';Categoria='Hardware'} 400)
@@ -67,6 +80,12 @@ try{
     $resultadoBusqueda=Api $adminTecnova "Tickets/Listar?q=$ticketIdTecnova&estado=4"
     if($ticketIdTecnova -notin $resultadoBusqueda.datos.Id){throw 'Busqueda no encontro el ticket cerrado'}
     Write-Host 'PASS: asignacion, secuencia de estados, cierre y busqueda.'
+    $hoyTecnova=[DateTime]::UtcNow.ToString('yyyy-MM-dd')
+    [void](Api $empleadoTecnova "Reportes/Resumen?desde=$hoyTecnova&hasta=$hoyTecnova" $null 403)
+    $reporteTecnova=Api $adminTecnova "Reportes/Resumen?desde=$hoyTecnova&hasta=$hoyTecnova&estado=4"
+    if($reporteTecnova.resumen.Total -lt 1 -or $reporteTecnova.resumen.Resueltos -lt 1){throw 'Reporte no incluye ticket resuelto'}
+    [void](Api $adminTecnova 'Reportes/Resumen?desde=2026-10-30&hasta=2026-10-01' $null 400)
+    Write-Host 'PASS: reportes, fechas y permisos.'
     $nuevo=Api $empleadoTecnova 'Tickets/Crear' @{Titulo='Eliminar prueba';Descripcion='Ticket temporal para eliminar';Categoria='Hardware'}
     $ticketIdTecnova=$nuevo.id
     $detalle=(Api $empleadoTecnova "Tickets/Detalle?id=$ticketIdTecnova").datos
@@ -79,6 +98,7 @@ try{
     [void](Api $otroTecnova 'Empleados/Listar' $null 401)
     Write-Host 'PASS: login, permisos de administrador y revocacion de cuenta inactiva.'
 }finally{
-    foreach($idTecnova in $idsTecnova){[void](SqlPrueba 'DELETE Comentarios WHERE IdTicket IN (SELECT Id FROM Tickets WHERE IdUsuarioSolicitante=@id); DELETE Tickets WHERE IdUsuarioSolicitante=@id; DELETE Usuarios WHERE Id=@id' @{'@id'=$idTecnova})}
+    foreach($idTecnova in $idsTecnova){[void](SqlPrueba 'DELETE Comentarios WHERE IdTicket IN (SELECT Id FROM Tickets WHERE IdUsuarioSolicitante=@id); DELETE Tickets WHERE IdUsuarioSolicitante=@id;' @{'@id'=$idTecnova})}
+    foreach($idTecnova in $idsTecnova){[void](SqlPrueba 'DELETE Usuarios WHERE Id=@id' @{'@id'=$idTecnova})}
     $conexionTecnova.Dispose()
 }

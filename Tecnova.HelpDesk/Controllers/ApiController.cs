@@ -14,6 +14,8 @@ namespace Tecnova.HelpDesk.Controllers
         {
             if (context.Exception is System.Web.Mvc.HttpAntiForgeryException)
                 context.Result=Fail("La página expiró. Recarga e intenta de nuevo.",400);
+            else if (context.Exception is System.Web.HttpRequestValidationException)
+                context.Result=Fail("Escribe texto sin etiquetas HTML ni código ejecutable.",400);
             else if (context.Exception is SqlException)
                 context.Result=Fail("No se pudo completar la operación de datos. Verifica la conexión e intenta de nuevo.",503);
             else { base.OnException(context); return; }

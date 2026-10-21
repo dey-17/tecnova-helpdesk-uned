@@ -35,6 +35,7 @@
     <Compile Include="Models\TicketInput.cs" /><Compile Include="Controllers\TicketsController.cs" />
     <Compile Include="Controllers\ComentariosController.cs" /><Content Include="Scripts\comentarios.js" />
     <Compile Include="Controllers\SoporteController.cs" /><Content Include="Scripts\soporte.js" />
+    <Compile Include="Controllers\ReportesController.cs" /><Content Include="Scripts\reportes.js" /><Content Include="Views\Inicio\_Reportes.cshtml" />
     <Content Include="Views\Inicio\_Tickets.cshtml" /><Content Include="Scripts\tickets.js" />
     <Compile Include="Security\Passwords.cs" /><Compile Include="Security\Access.cs" />
     <Compile Include="Controllers\ApiController.cs" /><Compile Include="Controllers\CuentaController.cs" /><Compile Include="Controllers\EmpleadosController.cs" />
