@@ -32,6 +32,9 @@
     <Compile Include="Global.asax.cs"><DependentUpon>Global.asax</DependentUpon></Compile>
     <Compile Include="App_Start\RouteConfig.cs" /><Compile Include="Controllers\InicioController.cs" />
     <Compile Include="Data\Db.cs" />
+    <Compile Include="Security\Passwords.cs" /><Compile Include="Security\Access.cs" />
+    <Compile Include="Controllers\ApiController.cs" /><Compile Include="Controllers\CuentaController.cs" /><Compile Include="Controllers\EmpleadosController.cs" />
+    <Content Include="Views\Cuenta\Login.cshtml" /><Content Include="Views\Inicio\Panel.cshtml" /><Content Include="Scripts\portal.js" /><Content Include="Content\portal.css" />
     <Content Include="Global.asax" /><Content Include="Web.config" /><Content Include="Views\Web.config" />
     <Content Include="Views\_ViewStart.cshtml" /><Content Include="Views\Shared\_Layout.cshtml" />
     <Content Include="Views\Inicio\Index.cshtml" /><Content Include="Content\site.css" /><Content Include="Scripts\shell.js" />
