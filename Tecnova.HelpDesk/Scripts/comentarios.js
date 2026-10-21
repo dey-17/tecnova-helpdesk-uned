@@ -11,8 +11,8 @@
             const save=el('button','Guardar cambios','button-primary'),cancel=el('button','Cancelar','button-secondary');cancel.type='button';cancel.onclick=()=>{f.remove();edit.hidden=false;};f.append(label,save,cancel);card.append(f);input.focus();
             f.onsubmit=e=>{e.preventDefault();busy(f,async()=>{const r=await request('Comentarios/Editar',{id:ticket.Id,comentario:comment.Id,texto:input.value,version:ticket.Version});await window.tecnovaTickets.open(ticket.Id);message(r.mensaje);});};};card.append(edit);
         }box.append(card);});
-        const empleadoYaComento=document.body.dataset.admin!=='true'&&r.datos.some(comment=>comment.Propio);
-        if(ticket.IdEstado>=3||empleadoYaComento)return;
+        const yaComento=r.datos.some(comment=>comment.Propio);
+        if(ticket.IdEstado>=3||yaComento)return;
         const form=el('form'),label=el('label','Agregar comentario'),input=el('textarea');input.required=true;input.maxLength=2000;input.value=drafts.get(ticket.Id)||'';input.oninput=()=>drafts.set(ticket.Id,input.value);label.append(input);const button=el('button','Enviar comentario','button-primary');button.type='submit';form.append(label,button);box.append(form);
         form.onsubmit=e=>{e.preventDefault();busy(form,async()=>{const result=await request('Comentarios/Agregar',{id:ticket.Id,texto:input.value});drafts.delete(ticket.Id);message(result.mensaje);await window.tecnovaTickets.open(ticket.Id);await window.tecnovaTickets.load();});};
     };

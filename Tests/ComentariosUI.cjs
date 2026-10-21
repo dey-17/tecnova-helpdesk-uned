@@ -28,6 +28,11 @@ async function check(admin, state, comments, add, edit) {
     await check(false, 2, [own, other], false, true);
     await check(false, 3, [own], false, true);
     await check(false, 4, [own], false, false);
-    await check(true, 2, [own], true, true);
-    console.log('PASS: comentarios del empleado, primera publicación, edición y cierre; administrador sin cambios.');
+    await check(true, 1, [], true, false);
+    await check(true, 1, [other], true, false);
+    await check(true, 1, [own], false, true);
+    await check(true, 2, [own], false, true);
+    await check(true, 3, [own], false, true);
+    await check(true, 4, [own], false, false);
+    console.log('PASS: empleados y administradores: primera publicación, edición propia y cierre de solo lectura.');
 })().catch(error => { console.error(error); process.exitCode = 1; });
