@@ -12,9 +12,12 @@ namespace Tecnova.HelpDesk.Controllers
     public class TicketsController : ApiController
     {
         internal const string SelectTicket="SELECT t.Id,t.Titulo,t.Descripcion,t.Categoria,t.IdEstado,e.Nombre Estado,t.IdUsuarioSolicitante,t.IdUsuarioAsignado,u.Nombre Solicitante,a.Nombre Asignado,t.FechaCreacion,t.FechaActualizacion,t.FechaResolucion,t.FechaCierre,t.Version FROM Tickets t JOIN EstadosTicket e ON e.Id=t.IdEstado JOIN Usuarios u ON u.Id=t.IdUsuarioSolicitante LEFT JOIN Usuarios a ON a.Id=t.IdUsuarioAsignado ";
-        [HttpGet] public ActionResult Listar()
+        [HttpGet] public ActionResult Listar(string q="",int estado=0)
         {
-            var data=Db.Query(SelectTicket+"WHERE (@admin=1 OR t.IdUsuarioSolicitante=@uid) ORDER BY t.Id DESC OFFSET 0 ROWS FETCH NEXT 200 ROWS ONLY",Db.P("@admin",Actual.Admin),Db.P("@uid",Actual.Id));
+            q=(q??"").Trim();if(q.Length>150||estado<0||estado>4)return Fail("Filtro inválido.");
+            int number;int.TryParse(q.TrimStart('#'),out number);
+            string pattern="%"+q.Replace("[","[[]").Replace("%","[%]").Replace("_","[_]")+"%";
+            var data=Db.Query(SelectTicket+"WHERE (@admin=1 OR t.IdUsuarioSolicitante=@uid) AND (@estado=0 OR t.IdEstado=@estado) AND (@q='' OR t.Titulo LIKE @pattern OR t.Id=@numero OR e.Nombre LIKE @pattern) ORDER BY t.Id DESC OFFSET 0 ROWS FETCH NEXT 200 ROWS ONLY",Db.P("@admin",Actual.Admin),Db.P("@uid",Actual.Id),Db.P("@estado",estado),Db.P("@q",q),Db.P("@pattern",pattern),Db.P("@numero",number));
             return Json(new {ok=true,datos=Db.Rows(data)},JsonRequestBehavior.AllowGet);
         }
         [HttpGet] public ActionResult Detalle(int id)

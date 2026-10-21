@@ -56,6 +56,20 @@ try{
     if($comentarios.datos.Count -ne 2){throw 'Comentarios no persistidos'}
     Write-Host 'PASS: comentarios persistentes y acceso restringido.'
     $detalle=(Api $empleadoTecnova "Tickets/Detalle?id=$ticketIdTecnova").datos
+    [void](Api $empleadoTecnova 'Soporte/Estado' @{id=$ticketIdTecnova;estado=2;version=$detalle.Version} 403)
+    [void](Api $adminTecnova 'Soporte/Estado' @{id=$ticketIdTecnova;estado=2;version=$detalle.Version} 409)
+    [void](Api $adminTecnova 'Soporte/Asignar' @{id=$ticketIdTecnova;responsable=$idsTecnova[0];version=$detalle.Version})
+    foreach($estadoTecnova in @(2,3,4)){
+        $detalle=(Api $adminTecnova "Tickets/Detalle?id=$ticketIdTecnova").datos
+        [void](Api $adminTecnova 'Soporte/Estado' @{id=$ticketIdTecnova;estado=$estadoTecnova;version=$detalle.Version;solucion='Se corrigio la configuracion y se verifico el funcionamiento.'})
+    }
+    [void](Api $empleadoTecnova 'Comentarios/Agregar' @{id=$ticketIdTecnova;texto='Cerrado'} 409)
+    $resultadoBusqueda=Api $adminTecnova "Tickets/Listar?q=$ticketIdTecnova&estado=4"
+    if($ticketIdTecnova -notin $resultadoBusqueda.datos.Id){throw 'Busqueda no encontro el ticket cerrado'}
+    Write-Host 'PASS: asignacion, secuencia de estados, cierre y busqueda.'
+    $nuevo=Api $empleadoTecnova 'Tickets/Crear' @{Titulo='Eliminar prueba';Descripcion='Ticket temporal para eliminar';Categoria='Hardware'}
+    $ticketIdTecnova=$nuevo.id
+    $detalle=(Api $empleadoTecnova "Tickets/Detalle?id=$ticketIdTecnova").datos
     [void](Api $empleadoTecnova 'Tickets/Eliminar' @{id=$ticketIdTecnova;version=$detalle.Version})
     [void](Api $empleadoTecnova "Tickets/Detalle?id=$ticketIdTecnova" $null 404)
     Write-Host 'PASS: CRUD de tickets, validaciones, propiedad y version concurrente.'
