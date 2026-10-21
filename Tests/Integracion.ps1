@@ -48,6 +48,13 @@ try{
     [void](Api $empleadoTecnova 'Tickets/Editar' @{id=$ticketIdTecnova;version=$detalle.Version;Titulo='Incidencia editada';Descripcion='Descripcion corregida';Categoria='Software'})
     [void](Api $empleadoTecnova 'Tickets/Editar' @{id=$ticketIdTecnova;version=$detalle.Version;Titulo='Antiguo';Descripcion='No debe guardar';Categoria='Software'} 409)
     [void](Api $empleadoTecnova 'Tickets/Crear' @{Titulo=' ';Descripcion='Prueba';Categoria='Hardware'} 400)
+    [void](Api $otroTecnova "Comentarios/Listar?id=$ticketIdTecnova" $null 404)
+    [void](Api $otroTecnova 'Comentarios/Agregar' @{id=$ticketIdTecnova;texto='No autorizado'} 409)
+    [void](Api $empleadoTecnova 'Comentarios/Agregar' @{id=$ticketIdTecnova;texto='Comentario del solicitante'})
+    [void](Api $adminTecnova 'Comentarios/Agregar' @{id=$ticketIdTecnova;texto='Respuesta de soporte'})
+    $comentarios=Api $empleadoTecnova "Comentarios/Listar?id=$ticketIdTecnova"
+    if($comentarios.datos.Count -ne 2){throw 'Comentarios no persistidos'}
+    Write-Host 'PASS: comentarios persistentes y acceso restringido.'
     $detalle=(Api $empleadoTecnova "Tickets/Detalle?id=$ticketIdTecnova").datos
     [void](Api $empleadoTecnova 'Tickets/Eliminar' @{id=$ticketIdTecnova;version=$detalle.Version})
     [void](Api $empleadoTecnova "Tickets/Detalle?id=$ticketIdTecnova" $null 404)

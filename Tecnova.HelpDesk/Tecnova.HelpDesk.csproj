@@ -33,6 +33,7 @@
     <Compile Include="App_Start\RouteConfig.cs" /><Compile Include="Controllers\InicioController.cs" />
     <Compile Include="Data\Db.cs" />
     <Compile Include="Models\TicketInput.cs" /><Compile Include="Controllers\TicketsController.cs" />
+    <Compile Include="Controllers\ComentariosController.cs" /><Content Include="Scripts\comentarios.js" />
     <Content Include="Views\Inicio\_Tickets.cshtml" /><Content Include="Scripts\tickets.js" />
     <Compile Include="Security\Passwords.cs" /><Compile Include="Security\Access.cs" />
     <Compile Include="Controllers\ApiController.cs" /><Compile Include="Controllers\CuentaController.cs" /><Compile Include="Controllers\EmpleadosController.cs" />
