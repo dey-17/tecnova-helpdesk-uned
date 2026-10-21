@@ -19,8 +19,8 @@
 @if(Model.Admin){<section id="seccion-tecnicos" hidden><h1>Personal de soporte</h1><p>Registra los técnicos que atienden las solicitudes. Estos registros no tienen usuario, contraseña ni acceso al sistema.</p><form id="tecnico-form" class="form-card"><input type="hidden" name="id" value="0"/><input type="hidden" name="version"/><label>Nombre del técnico<input name="nombre" required minlength="2" maxlength="100"/></label><label>Correo del técnico<input name="email" type="email" required maxlength="254"/></label><div class="actions"><button class="button-primary" type="submit">Guardar técnico</button><button id="cancelar-tecnico" type="button" class="button-secondary">Limpiar formulario</button></div></form><div id="tecnicos-lista" class="list" aria-live="polite"></div></section>}
 </main></div></div><dialog id="confirmacion" aria-labelledby="confirmacion-titulo"><h2 id="confirmacion-titulo">Confirmar acción</h2><p id="confirmacion-texto"></p><div class="actions"><button type="button" id="confirmar-no" class="button-secondary">Cancelar</button><button type="button" id="confirmar-si" class="button-primary">Confirmar</button></div></dialog>
 <script src="@Url.Content("~/Scripts/portal.js?v=20261021")" defer></script>
-<script src="@Url.Content("~/Scripts/tickets.js?v=20261021-4")" defer></script>
-<script src="@Url.Content("~/Scripts/comentarios.js?v=20261021-4")" defer></script>
+<script src="@Url.Content("~/Scripts/tickets.js?v=20261021-5")" defer></script>
+<script src="@Url.Content("~/Scripts/comentarios.js?v=20261021-5")" defer></script>
 <script src="@Url.Content("~/Scripts/soporte.js?v=20261021-3")" defer></script>
 <script src="@Url.Content("~/Scripts/tecnicos.js?v=20261021")" defer></script>
 <script src="@Url.Content("~/Scripts/reportes.js")" defer></script>

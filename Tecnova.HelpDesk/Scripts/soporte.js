@@ -6,8 +6,8 @@
     let sequence=0;
     window.tecnovaDetails=async function(ticket){
         const order=++sequence;const box=document.getElementById('gestion-ticket');box.replaceChildren();
-        if(ticket.IdEstado===4)return;
-        box.append(el('h2',ticket.IdEstado===3?'Finalizar ticket':'Atención de soporte'));
+        if(ticket.IdEstado>=3)return;
+        box.append(el('h2','Atención de soporte'));
         if(ticket.IdEstado<=2){const result=await request('Soporte/Responsables');if(order!==sequence)return;const form=el('form'),label=el('label','Responsable de soporte'),select=el('select');select.required=true;const empty=el('option','Selecciona un técnico o asígnate el ticket');empty.value='';select.append(empty);result.datos.forEach(user=>{const op=el('option',user.Tipo==='tecnico'?'Técnico · '+user.Nombre:'Asignarme a mí · '+user.Nombre);op.value=user.Tipo+':'+user.Id;op.selected=user.Tipo==='tecnico'?ticket.IdTecnicoAsignado===user.Id:ticket.IdUsuarioAsignado===user.Id;select.append(op);});label.append(select);const button=el('button','Asignar responsable','button-secondary');form.append(label,button);form.onsubmit=e=>{e.preventDefault();busy(form,async()=>{const r=await request('Soporte/Asignar',{id:ticket.Id,tipo:select.value.split(':')[0],responsable:select.value.split(':')[1],version:ticket.Version});message(r.mensaje);await window.tecnovaTickets.open(ticket.Id);await window.tecnovaTickets.load();});};box.append(form);}
         const form=el('form');let solution;
         if(ticket.IdEstado===2){const label=el('label','Cómo se solucionó el problema');solution=el('textarea');solution.required=true;solution.minLength=10;solution.maxLength=2000;label.append(solution);form.append(label);}
