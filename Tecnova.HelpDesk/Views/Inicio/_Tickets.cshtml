@@ -1,6 +1,7 @@
-<div class="section-title"><h1>Solicitudes</h1><button type="button" id="actualizar-tickets" class="button-secondary">Actualizar lista</button></div>
-<p>Registra una incidencia y consulta su seguimiento. Se muestran hasta 200 solicitudes.</p>
-<form id="ticket-form" class="form-card"><h2 id="titulo-form-ticket">Registrar ticket</h2><input type="hidden" name="id"/><input type="hidden" name="version"/>
-<label>Título<input name="Titulo" required maxlength="150"/></label><label>Categoría<select name="Categoria" required><option value="">Selecciona una categoría</option><option>Hardware</option><option>Software</option><option>Red</option><option>Accesos</option><option>Otro</option></select></label><label>Descripción<textarea name="Descripcion" required maxlength="3000"></textarea></label><div class="actions"><button type="submit" class="button-primary">Guardar ticket</button><button type="button" id="cancelar-ticket" class="button-secondary">Limpiar / cancelar edición</button></div></form>
+@model Tecnova.HelpDesk.Security.Actor
+<div id="historial-listado">
+<div class="section-title"><h1 id="titulo-historial" tabindex="-1">Historial de solicitudes</h1></div>
+<p>@(Model.Admin ? "Consulta las solicitudes de todos los empleados." : "Consulta las solicitudes que has registrado.") Filtra por estado y selecciona Ver detalle para revisar el seguimiento. Se muestran hasta 200 coincidencias.</p>
 <div id="busqueda-tickets"></div><div id="tickets-lista" class="list" aria-live="polite"></div>
-<section id="detalle-ticket" class="form-card" hidden aria-label="Detalle del ticket"><button type="button" id="cerrar-detalle" class="button-secondary">Cerrar detalle</button><div id="detalle-contenido"></div><div id="gestion-ticket"></div><div id="comentarios-ticket"></div></section>
+</div>
+<section id="detalle-ticket" class="form-card" hidden aria-label="Detalle del ticket"><button type="button" id="cerrar-detalle" class="button-secondary"><span aria-hidden="true">← </span>Volver al historial</button><div id="detalle-contenido"></div><div id="gestion-ticket"></div><div id="comentarios-ticket"></div></section>

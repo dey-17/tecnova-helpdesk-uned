@@ -3,21 +3,25 @@
 <!doctype html><html lang="es"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Panel · Tecnova</title><link rel="stylesheet" href="@Url.Content("~/Content/site.css")"/><link rel="stylesheet" href="@Url.Content("~/Content/portal.css")"/></head>
 <body data-root="@Url.Content("~/")" data-admin="@Model.Admin.ToString().ToLowerInvariant()">
 <div class="app-shell"><aside class="sidebar"><a class="brand" href="@Url.Action("Panel")"><span class="brand-mark">T.</span><span>TECNOVA<small>HELP DESK</small></span></a><span class="nav-label">ESPACIO DE TRABAJO</span>
-<nav aria-label="Menú principal"><button class="nav-link" data-section="tickets" aria-current="page">Solicitudes</button>
-@if(Model.Admin){<button class="nav-link" data-section="empleados">Empleados</button>}
-@if(Model.Admin){<button class="nav-link" data-section="reportes">Reportes</button>}
-<button class="nav-link" data-section="cuenta">Mi cuenta</button>
+<nav aria-label="Menú principal"><button class="nav-link" data-section="crear" aria-current="page">Crear ticket</button>
+<button class="nav-link" data-section="tickets">Historial de solicitudes</button>
+@if(Model.Admin){<button class="nav-link" data-section="empleados">Agregar empleados</button>}
+@if(Model.Admin){<button class="nav-link" data-section="tecnicos">Personal de soporte</button><button class="nav-link" data-section="reportes">Reportes</button>}
+<button class="nav-link" data-section="cuenta">Configuración</button>
 <button class="nav-link" id="salir">Cerrar sesión</button></nav><div class="sidebar-bottom"><strong>@Model.Nombre</strong><p>@Model.Rol</p></div></aside>
 <div class="workspace"><header class="topbar"><div><span class="eyebrow">PORTAL DE EMPLEADOS</span><p>Help Desk · Soporte interno</p></div><span>@Model.Nombre · @Model.Rol</span></header>
 <main id="portal">@Html.AntiForgeryToken()<div id="mensaje" role="status" aria-live="polite" tabindex="-1" hidden></div>
-<section id="seccion-tickets">@Html.Partial("_Tickets")</section>
-<section id="seccion-cuenta" hidden><h1>Mi cuenta</h1><p>@Model.Nombre · @Model.Rol</p><form id="clave-form" class="form-card"><label>Contraseña actual<input type="password" name="actual" required maxlength="128" autocomplete="current-password"/></label><label>Nueva contraseña<input type="password" name="nueva" required minlength="12" maxlength="128" autocomplete="new-password"/></label><p>Al cambiarla se cerrarán tus sesiones. Usa al menos 12 caracteres.</p><button type="submit" class="button-primary">Cambiar contraseña</button></form></section>
+<section id="seccion-crear">@Html.Partial("_CrearTicket")</section>
+<section id="seccion-tickets" hidden>@Html.Partial("_Tickets")</section>
+<section id="seccion-cuenta" hidden><h1>Configuración</h1><p>@Model.Nombre · @Model.Rol</p><form id="clave-form" class="form-card"><label>Contraseña actual<input type="password" name="actual" required maxlength="128" autocomplete="current-password"/></label><label>Nueva contraseña<input type="password" name="nueva" required minlength="12" maxlength="128" autocomplete="new-password"/></label><p>Al cambiarla se cerrarán tus sesiones. Usa al menos 12 caracteres.</p><button type="submit" class="button-primary">Cambiar contraseña</button></form></section>
 @if(Model.Admin){<section id="seccion-reportes" hidden>@Html.Partial("_Reportes")</section>}
-@if(Model.Admin){<section id="seccion-empleados" hidden><h1>Empleados</h1><p>Administra las cuentas de acceso. Las bajas conservan sus tickets.</p><form id="empleado-form" class="form-card"><input type="hidden" name="id"/><input type="hidden" name="version"/><label>Nombre<input name="nombre" required minlength="2" maxlength="100"/></label><label>Correo<input type="email" name="email" required maxlength="254"/></label><label>Contraseña<input type="password" name="password" minlength="12" maxlength="128" autocomplete="new-password"/><small>Obligatoria al crear. Déjala vacía al editar para conservarla.</small></label><div class="actions"><button type="submit" class="button-primary">Guardar empleado</button><button type="button" id="cancelar-empleado" class="button-secondary">Limpiar formulario</button></div></form><div id="empleados-lista" class="list" aria-live="polite"></div></section>}
+@if(Model.Admin){<section id="seccion-empleados" hidden><h1>Agregar empleados</h1><p>Administra las cuentas de acceso. Las bajas conservan sus tickets.</p><form id="empleado-form" class="form-card"><input type="hidden" name="id"/><input type="hidden" name="version"/><label>Nombre<input name="nombre" required minlength="2" maxlength="100"/></label><label>Correo<input type="email" name="email" required maxlength="254"/></label><label>Contraseña<input type="password" name="password" minlength="12" maxlength="128" autocomplete="new-password"/><small>Obligatoria al crear. Déjala vacía al editar para conservarla.</small></label><div class="actions"><button type="submit" class="button-primary">Guardar empleado</button><button type="button" id="cancelar-empleado" class="button-secondary">Limpiar formulario</button></div></form><div id="empleados-lista" class="list" aria-live="polite"></div></section>}
+@if(Model.Admin){<section id="seccion-tecnicos" hidden><h1>Personal de soporte</h1><p>Registra los técnicos que atienden las solicitudes. Estos registros no tienen usuario, contraseña ni acceso al sistema.</p><form id="tecnico-form" class="form-card"><input type="hidden" name="id" value="0"/><input type="hidden" name="version"/><label>Nombre del técnico<input name="nombre" required minlength="2" maxlength="100"/></label><label>Correo del técnico<input name="email" type="email" required maxlength="254"/></label><div class="actions"><button class="button-primary" type="submit">Guardar técnico</button><button id="cancelar-tecnico" type="button" class="button-secondary">Limpiar formulario</button></div></form><div id="tecnicos-lista" class="list" aria-live="polite"></div></section>}
 </main></div></div><dialog id="confirmacion" aria-labelledby="confirmacion-titulo"><h2 id="confirmacion-titulo">Confirmar acción</h2><p id="confirmacion-texto"></p><div class="actions"><button type="button" id="confirmar-no" class="button-secondary">Cancelar</button><button type="button" id="confirmar-si" class="button-primary">Confirmar</button></div></dialog>
-<script src="@Url.Content("~/Scripts/portal.js")" defer></script>
-<script src="@Url.Content("~/Scripts/tickets.js")" defer></script>
+<script src="@Url.Content("~/Scripts/portal.js?v=20261021")" defer></script>
+<script src="@Url.Content("~/Scripts/tickets.js?v=20261021-3")" defer></script>
 <script src="@Url.Content("~/Scripts/comentarios.js")" defer></script>
-<script src="@Url.Content("~/Scripts/soporte.js")" defer></script>
+<script src="@Url.Content("~/Scripts/soporte.js?v=20261021-3")" defer></script>
+<script src="@Url.Content("~/Scripts/tecnicos.js?v=20261021")" defer></script>
 <script src="@Url.Content("~/Scripts/reportes.js")" defer></script>
 </body></html>

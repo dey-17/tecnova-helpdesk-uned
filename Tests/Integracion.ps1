@@ -21,6 +21,11 @@ function Sesion($email){
     $page=Invoke-WebRequest "$BaseUrl/Inicio/Panel" -WebSession $s
     $token=[regex]::Match($page.Content,'name="__RequestVerificationToken"[^>]*value="([^"]+)"').Groups[1].Value
     if(!$token){throw 'Panel sin token'}
+    foreach($marca in @('data-section="crear"','Historial de solicitudes','Configuración','id="historial-listado"','Volver al historial')){
+        if(!$page.Content.Contains($marca)){throw "Panel sin navegación esperada: $marca"}
+    }
+    if([regex]::Matches($page.Content,'id="ticket-form"').Count -ne 1){throw 'Formulario de ticket duplicado'}
+    if($page.Content.Contains('id="actualizar-tickets"')){throw 'El historial no debe incluir actualización manual'}
     return @{session=$s;token=$token}
 }
 function Api($s,$path,$data=$null,$status=200){
@@ -30,6 +35,7 @@ function Api($s,$path,$data=$null,$status=200){
     if([int]$r.StatusCode -ne $status){throw "$path esperaba $status y recibió $($r.StatusCode): $($r.Content)"}
     return ($r.Content|ConvertFrom-Json)
 }
+$idTecnicoPrueba=0
 $idsTecnova=New-Object 'System.Collections.Generic.List[int]'
 try{
     foreach($rolTecnova in @('Administrador','Usuario','Usuario')){
@@ -72,10 +78,32 @@ try{
     [void](Api $empleadoTecnova 'Soporte/Estado' @{id=$ticketIdTecnova;estado=2;version=$detalle.Version} 403)
     [void](Api $adminTecnova 'Soporte/Estado' @{id=$ticketIdTecnova;estado=2;version=$detalle.Version} 409)
     [void](Api $adminTecnova 'Soporte/Asignar' @{id=$ticketIdTecnova;responsable=$idsTecnova[0];version=$detalle.Version})
+
+    $correoTecnico="tecnico-$sufijoTecnova@example.invalid"
+    [void](Api $empleadoTecnova 'Tecnicos/Listar' $null 403)
+    [void](Api $adminTecnova 'Tecnicos/Guardar' @{nombre='Tecnico original';email=$correoTecnico})
+    $tecnico=(Api $adminTecnova 'Tecnicos/Listar').datos|Where-Object Email -eq $correoTecnico
+    $idTecnicoPrueba=$tecnico.Id
+    [void](Api $adminTecnova 'Tecnicos/Guardar' @{nombre='Duplicado';email=$correoTecnico} 409)
+    if((SqlPrueba 'SELECT COUNT(*) FROM Usuarios WHERE Email=@e' @{'@e'=$correoTecnico}) -ne 0){throw 'Tecnico no debe tener cuenta'}
+    $detalle=(Api $adminTecnova "Tickets/Detalle?id=$ticketIdTecnova").datos
+    [void](Api $adminTecnova 'Soporte/Asignar' @{id=$ticketIdTecnova;responsable=$idTecnicoPrueba;tipo='tecnico';version=$detalle.Version})
+    [void](Api $adminTecnova 'Tecnicos/Estado' @{id=$idTecnicoPrueba;activo='false';version=$tecnico.Version} 409)
+    [void](Api $otroTecnova "Tickets/Historial?id=$ticketIdTecnova" $null 404)
+    $detalle=(Api $empleadoTecnova "Tickets/Detalle?id=$ticketIdTecnova").datos
+    [void](Api $empleadoTecnova 'Tickets/Editar' @{id=$ticketIdTecnova;version=$detalle.Version;Titulo='No permitido';Descripcion='Asignado';Categoria='Hardware'} 409)
     foreach($estadoTecnova in @(2,3,4)){
         $detalle=(Api $adminTecnova "Tickets/Detalle?id=$ticketIdTecnova").datos
         [void](Api $adminTecnova 'Soporte/Estado' @{id=$ticketIdTecnova;estado=$estadoTecnova;version=$detalle.Version;solucion='Se corrigio la configuracion y se verifico el funcionamiento.'})
     }
+
+    [void](Api $adminTecnova 'Tecnicos/Guardar' @{id=$idTecnicoPrueba;version=$tecnico.Version;nombre='Tecnico renombrado';email=$correoTecnico})
+    $historial=(Api $empleadoTecnova "Tickets/Historial?id=$ticketIdTecnova").datos
+    if(($historial|Where-Object Accion -eq 'Ticket resuelto').Responsable -ne 'Tecnico original'){throw 'El historial perdió el nombre original'}
+    if($historial.Count -ne 5){throw 'Historial incompleto'}
+    $tecnico=(Api $adminTecnova 'Tecnicos/Listar').datos|Where-Object Id -eq $idTecnicoPrueba
+    [void](Api $adminTecnova 'Tecnicos/Estado' @{id=$idTecnicoPrueba;activo='false';version=$tecnico.Version})
+    Write-Host 'PASS: tecnicos sin cuenta, asignacion, baja y trazabilidad inmutable.'
     [void](Api $empleadoTecnova 'Comentarios/Agregar' @{id=$ticketIdTecnova;texto='Cerrado'} 409)
     $resultadoBusqueda=Api $adminTecnova "Tickets/Listar?q=$ticketIdTecnova&estado=4"
     if($ticketIdTecnova -notin $resultadoBusqueda.datos.Id){throw 'Busqueda no encontro el ticket cerrado'}
@@ -89,6 +117,7 @@ try{
     $nuevo=Api $empleadoTecnova 'Tickets/Crear' @{Titulo='Eliminar prueba';Descripcion='Ticket temporal para eliminar';Categoria='Hardware'}
     $ticketIdTecnova=$nuevo.id
     $detalle=(Api $empleadoTecnova "Tickets/Detalle?id=$ticketIdTecnova").datos
+    [void](Api $adminTecnova 'Soporte/Asignar' @{id=$ticketIdTecnova;responsable=$idTecnicoPrueba;tipo='tecnico';version=$detalle.Version} 409)
     [void](Api $empleadoTecnova 'Tickets/Eliminar' @{id=$ticketIdTecnova;version=$detalle.Version})
     [void](Api $empleadoTecnova "Tickets/Detalle?id=$ticketIdTecnova" $null 404)
     Write-Host 'PASS: CRUD de tickets, validaciones, propiedad y version concurrente.'
@@ -98,7 +127,8 @@ try{
     [void](Api $otroTecnova 'Empleados/Listar' $null 401)
     Write-Host 'PASS: login, permisos de administrador y revocacion de cuenta inactiva.'
 }finally{
-    foreach($idTecnova in $idsTecnova){[void](SqlPrueba 'DELETE Comentarios WHERE IdTicket IN (SELECT Id FROM Tickets WHERE IdUsuarioSolicitante=@id); DELETE Tickets WHERE IdUsuarioSolicitante=@id;' @{'@id'=$idTecnova})}
+    foreach($idTecnova in $idsTecnova){[void](SqlPrueba 'DELETE HistorialAtencion WHERE IdTicket IN (SELECT Id FROM Tickets WHERE IdUsuarioSolicitante=@id); DELETE Comentarios WHERE IdTicket IN (SELECT Id FROM Tickets WHERE IdUsuarioSolicitante=@id); DELETE Tickets WHERE IdUsuarioSolicitante=@id;' @{'@id'=$idTecnova})}
     foreach($idTecnova in $idsTecnova){[void](SqlPrueba 'DELETE Usuarios WHERE Id=@id' @{'@id'=$idTecnova})}
+    if($idTecnicoPrueba){[void](SqlPrueba 'DELETE Tecnicos WHERE Id=@id' @{'@id'=$idTecnicoPrueba})}
     $conexionTecnova.Dispose()
 }

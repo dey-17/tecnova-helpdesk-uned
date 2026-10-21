@@ -1,0 +1,7 @@
+<h1 id="titulo-form-ticket">Crear ticket</h1>
+<p>Describe la incidencia. Después de guardarla podrás darle seguimiento en el historial de solicitudes.</p>
+<form id="ticket-form" class="form-card"><input type="hidden" name="id"/><input type="hidden" name="version"/>
+<label>Título<input name="Titulo" required maxlength="150"/></label>
+<label>Categoría<select name="Categoria" required><option value="">Selecciona una categoría</option><option>Hardware</option><option>Software</option><option>Red</option><option>Accesos</option><option>Otro</option></select></label>
+<label>Descripción<textarea name="Descripcion" required maxlength="3000"></textarea></label>
+<div class="actions"><button type="submit" class="button-primary">Guardar ticket</button><button type="button" id="cancelar-ticket" class="button-secondary">Limpiar / cancelar edición</button></div></form>

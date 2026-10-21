@@ -23,20 +23,22 @@ Desde la carpeta que contiene la solución, después de instalar LocalDB desde M
 .\INICIAR.ps1
 ```
 
-El script de administrador pide una contraseña sin mostrarla; exige 12–128 caracteres y no modifica un administrador existente. No hay contraseña predeterminada. Después del primer acceso se puede cambiar desde **Mi cuenta**.
+El script de administrador pide una contraseña sin mostrarla; exige 12–128 caracteres y no modifica un administrador existente. No hay contraseña predeterminada. Después del primer acceso se puede cambiar desde **Configuración**.
 
 Abrir **http://localhost:51843/Cuenta/Login**. Ctrl+C detiene IIS Express si se inició desde la terminal. Para reiniciar: `./INICIAR.ps1`. Para otro puerto: `./INICIAR.ps1 -Puerto 51844`.
 
-`Database/001_CrearBase.sql` también puede ejecutarse en SQL Server Management Studio. Crea `TecnovaHelpDesk` y Usuarios, Tickets, Comentarios y EstadosTicket con claves primarias/foráneas, restricciones e índices. No elimina ni reinicializa datos existentes. No es un migrador de cualquier esquema previo: usar una base nueva con ese nombre o el esquema de este proyecto. `002_Verificar.sql` comprueba estados y relaciones.
+`Database/001_CrearBase.sql` también puede ejecutarse en SQL Server Management Studio. Crea `TecnovaHelpDesk` y Usuarios, Tickets, Comentarios y EstadosTicket con claves primarias/foráneas, restricciones e índices. No elimina ni reinicializa datos existentes. No es un migrador de cualquier esquema previo: usar una base nueva con ese nombre o el esquema de este proyecto. Ejecuta después `003_PersonalSoporte.sql` para incorporar técnicos e historial. `002_Verificar.sql` comprueba estados y relaciones del esquema actualizado.
 
 Para SQL Server completo: `Database/Instalar.ps1 -Servidor 'SERVIDOR\INSTANCIA'` y ajustar `connectionStrings/Tecnova` en Web.config. Se recomienda autenticación integrada de Windows. No publicar credenciales de SQL en Git. El proceso de IIS debe tener acceso a la base; LocalDB se usa desde IIS Express bajo el usuario que la creó. No se incluyen MDF/LDF ni copias de seguridad.
 
 ## Roles y funcionamiento
 
+El menú separa **Crear ticket** (formulario) e **Historial de solicitudes** (lista con filtros por estado y acceso al detalle). Al guardar se abre el historial; al editar se abre el formulario con los datos del ticket. **Volver al historial** regresa a la lista sin recargar la página. **Configuración** permite cambiar la contraseña. Para el administrador, **Agregar empleados** conserva las operaciones de alta, edición y activación de cuentas.
+
 - **Administrador:** crea, edita, activa y desactiva empleados; ve todos los tickets; asigna responsables; cambia estados; consulta reportes y descarga conteos en CSV.
 - **Usuario:** crea tickets, consulta únicamente los propios y agrega comentarios a sus tickets no cerrados. No hay registro público.
 - Desactivar conserva registros, pero bloquea el login y las solicitudes con cookies previas. Reactivar no revive sesiones antiguas.
-- La asignación es a un administrador activo, incluido el propio administrador. No se introduce un tercer rol de técnico ni se permite que un empleado consulte tickets ajenos por una asignación.
+- La asignación es a un técnico activo o al propio administrador. No se introduce un tercer rol de técnico ni se permite que un empleado consulte tickets ajenos por una asignación.
 - Estados: **Abierto → En Proceso → Resuelto → Cerrado**. Requieren responsable activo. Resolver exige describir la solución (10–2000 caracteres), guardada como comentario. Resolver y cerrar son acciones separadas; no hay reapertura.
 - El administrador puede editar/eliminar tickets abiertos; el solicitante puede hacerlo mientras no estén asignados. Los otros estados conservan el historial. Eliminar un ticket abierto retira sus comentarios, con confirmación personalizada.
 - Título 1–150, descripción 1–3000, categoría Hardware/Software/Red/Accesos/Otro y comentarios 1–2000. No se aceptan solo espacios ni etiquetas HTML.
@@ -70,4 +72,11 @@ Integracion crea cuentas temporales y tickets, comprueba autenticación, roles, 
 - `Scripts`: Ajax y actualización textual del DOM.
 - `Database`: creación/verificación de esquema y administrador inicial.
 
-Limitaciones: sin adjuntos, correo, recuperación automática de contraseña, auditoría histórica, notificaciones en tiempo real ni alta de administradores desde la interfaz. El administrador restablece contraseñas de empleados; el primero se configura localmente. La persistencia no depende de mantener la sesión ni el navegador abiertos.
+Limitaciones: sin adjuntos, correo, recuperación automática de contraseña, auditoría de cambios generales fuera de la atención, notificaciones en tiempo real ni alta de administradores desde la interfaz. El administrador restablece contraseñas de empleados; el primero se configura localmente. La persistencia no depende de mantener la sesión ni el navegador abiertos.
+### Personal de soporte y atención
+
+El administrador registra técnicos (nombre y correo) desde **Personal de soporte**. No son cuentas de acceso ni un tercer rol. Puede asignar un técnico activo o asignarse a sí mismo. Asignar no inicia la atención: se utiliza después **Iniciar atención**, luego se registra la solución y finalmente se cierra el ticket.
+
+El historial conserva el nombre del responsable y del administrador que registró cada asignación o cambio de estado. No se reconstruyen acciones anteriores a esta actualización. Para dar de baja a un técnico con tickets abiertos o en proceso, primero hay que reasignarlos. Los registros resueltos y cerrados se conservan.
+
+Ejecuta `Database/Instalar.ps1` para instalar o actualizar una base existente: aplica también `003_PersonalSoporte.sql`, de forma idempotente y sin eliminar datos. Se mantiene `IdUsuarioAsignado` para la autoasignación del administrador y se añade `IdTecnicoAsignado`; no pueden coexistir ambos responsables en un ticket.

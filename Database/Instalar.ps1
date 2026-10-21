@@ -9,7 +9,8 @@ $cadenaTecnova['Connect Timeout']=30
 $conexionTecnova=New-Object System.Data.SqlClient.SqlConnection $cadenaTecnova.ConnectionString
 try {
     $conexionTecnova.Open()
-    $scriptTecnova=Get-Content (Join-Path $PSScriptRoot '001_CrearBase.sql') -Raw
+    foreach($archivoTecnova in @('001_CrearBase.sql','003_PersonalSoporte.sql','002_Verificar.sql')) {
+    $scriptTecnova=Get-Content (Join-Path $PSScriptRoot $archivoTecnova) -Raw
     foreach($loteTecnova in [regex]::Split($scriptTecnova,'(?im)^\s*GO\s*$')) {
         if(!$loteTecnova.Trim()){continue}
         $comandoTecnova=$conexionTecnova.CreateCommand()
@@ -17,6 +18,7 @@ try {
         $comandoTecnova.CommandTimeout=60
         [void]$comandoTecnova.ExecuteNonQuery()
         $comandoTecnova.Dispose()
+    }
     }
     Write-Host 'Base TecnovaHelpDesk disponible. No se eliminaron datos existentes.'
 } finally { $conexionTecnova.Dispose() }
