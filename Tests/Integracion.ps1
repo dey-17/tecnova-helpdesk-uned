@@ -41,12 +41,23 @@ try{
     $empleadoTecnova=Sesion "test-1-$sufijoTecnova@example.invalid"
     $otroTecnova=Sesion "test-2-$sufijoTecnova@example.invalid"
     $r=Api $adminTecnova 'Empleados/Listar'
+    $nuevo=Api $empleadoTecnova 'Tickets/Crear' @{Titulo='Incidencia de prueba';Descripcion='Descripcion de prueba';Categoria='Hardware'}
+    $ticketIdTecnova=$nuevo.id
+    $detalle=(Api $empleadoTecnova "Tickets/Detalle?id=$ticketIdTecnova").datos
+    [void](Api $otroTecnova "Tickets/Detalle?id=$ticketIdTecnova" $null 404)
+    [void](Api $empleadoTecnova 'Tickets/Editar' @{id=$ticketIdTecnova;version=$detalle.Version;Titulo='Incidencia editada';Descripcion='Descripcion corregida';Categoria='Software'})
+    [void](Api $empleadoTecnova 'Tickets/Editar' @{id=$ticketIdTecnova;version=$detalle.Version;Titulo='Antiguo';Descripcion='No debe guardar';Categoria='Software'} 409)
+    [void](Api $empleadoTecnova 'Tickets/Crear' @{Titulo=' ';Descripcion='Prueba';Categoria='Hardware'} 400)
+    $detalle=(Api $empleadoTecnova "Tickets/Detalle?id=$ticketIdTecnova").datos
+    [void](Api $empleadoTecnova 'Tickets/Eliminar' @{id=$ticketIdTecnova;version=$detalle.Version})
+    [void](Api $empleadoTecnova "Tickets/Detalle?id=$ticketIdTecnova" $null 404)
+    Write-Host 'PASS: CRUD de tickets, validaciones, propiedad y version concurrente.'
     [void](Api $empleadoTecnova 'Empleados/Listar' $null 403)
     $u=$r.datos|Where-Object Id -eq $idsTecnova[2]
     [void](Api $adminTecnova 'Empleados/Estado' @{id=$u.Id;activo='false';version=$u.Version})
     [void](Api $otroTecnova 'Empleados/Listar' $null 401)
     Write-Host 'PASS: login, permisos de administrador y revocacion de cuenta inactiva.'
 }finally{
-    foreach($idTecnova in $idsTecnova){[void](SqlPrueba 'DELETE Usuarios WHERE Id=@id' @{'@id'=$idTecnova})}
+    foreach($idTecnova in $idsTecnova){[void](SqlPrueba 'DELETE Comentarios WHERE IdTicket IN (SELECT Id FROM Tickets WHERE IdUsuarioSolicitante=@id); DELETE Tickets WHERE IdUsuarioSolicitante=@id; DELETE Usuarios WHERE Id=@id' @{'@id'=$idTecnova})}
     $conexionTecnova.Dispose()
 }
