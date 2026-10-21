@@ -80,3 +80,6 @@ El administrador registra técnicos (nombre y correo) desde **Personal de soport
 El historial conserva el nombre del responsable y del administrador que registró cada asignación o cambio de estado. No se reconstruyen acciones anteriores a esta actualización. Para dar de baja a un técnico con tickets abiertos o en proceso, primero hay que reasignarlos. Los registros resueltos y cerrados se conservan.
 
 Ejecuta `Database/Instalar.ps1` para instalar o actualizar una base existente: aplica también `003_PersonalSoporte.sql`, de forma idempotente y sin eliminar datos. Se mantiene `IdUsuarioAsignado` para la autoasignación del administrador y se añade `IdTecnicoAsignado`; no pueden coexistir ambos responsables en un ticket.
+
+El administrador inicia en el historial y no muestra la opción Crear ticket en su menú. En tickets resueltos no se agregan comentarios nuevos: cada autor puede corregir sus propios comentarios antes del cierre. Los tickets cerrados son de solo lectura. La edición valida la versión del ticket para evitar sobrescribir cambios concurrentes.
+

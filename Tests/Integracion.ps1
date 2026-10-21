@@ -21,6 +21,10 @@ function Sesion($email){
     $page=Invoke-WebRequest "$BaseUrl/Inicio/Panel" -WebSession $s
     $token=[regex]::Match($page.Content,'name="__RequestVerificationToken"[^>]*value="([^"]+)"').Groups[1].Value
     if(!$token){throw 'Panel sin token'}
+    $botonCrear=[regex]::Match($page.Content,'<button[^>]*data-section="crear"[^>]*>').Value
+    $esAdmin=$email.StartsWith('test-0-')
+    if($esAdmin -ne $botonCrear.Contains('hidden=')){throw 'Visibilidad incorrecta del menu Crear ticket'}
+
     foreach($marca in @('data-section="crear"','Historial de solicitudes','Configuración','id="historial-listado"','Volver al historial')){
         if(!$page.Content.Contains($marca)){throw "Panel sin navegación esperada: $marca"}
     }
@@ -95,6 +99,19 @@ try{
     foreach($estadoTecnova in @(2,3,4)){
         $detalle=(Api $adminTecnova "Tickets/Detalle?id=$ticketIdTecnova").datos
         [void](Api $adminTecnova 'Soporte/Estado' @{id=$ticketIdTecnova;estado=$estadoTecnova;version=$detalle.Version;solucion='Se corrigio la configuracion y se verifico el funcionamiento.'})
+        if($estadoTecnova -eq 3){
+            $d=(Api $adminTecnova "Tickets/Detalle?id=$ticketIdTecnova").datos
+            $c=(Api $adminTecnova "Comentarios/Listar?id=$ticketIdTecnova").datos|Where-Object Propio|Select-Object -Last 1
+            [void](Api $adminTecnova 'Comentarios/Agregar' @{id=$ticketIdTecnova;texto='No permitido en resuelto'} 409)
+            [void](Api $empleadoTecnova 'Comentarios/Editar' @{id=$ticketIdTecnova;comentario=$c.Id;version=$d.Version;texto='Ajeno'} 409)
+            [void](Api $adminTecnova 'Comentarios/Editar' @{id=$ticketIdTecnova;comentario=$c.Id;version=$d.Version;texto='Solucion corregida y verificada correctamente.'})
+            [void](Api $adminTecnova 'Comentarios/Editar' @{id=$ticketIdTecnova;comentario=$c.Id;version=$d.Version;texto='Version antigua'} 409)
+        }
+        if($estadoTecnova -eq 4){
+            $d=(Api $adminTecnova "Tickets/Detalle?id=$ticketIdTecnova").datos
+            [void](Api $adminTecnova 'Comentarios/Editar' @{id=$ticketIdTecnova;comentario=$c.Id;version=$d.Version;texto='Cerrado'} 409)
+            Write-Host 'PASS: comentarios propios editables, resueltos sin altas y cierre de solo lectura.'
+        }
     }
 
     [void](Api $adminTecnova 'Tecnicos/Guardar' @{id=$idTecnicoPrueba;version=$tecnico.Version;nombre='Tecnico renombrado';email=$correoTecnico})

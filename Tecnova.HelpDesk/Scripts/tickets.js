@@ -23,4 +23,5 @@
     document.getElementById('cancelar-ticket').onclick=()=>{const editing=!!form.elements.id.value;reset();if(editing)navigate('tickets').catch(e=>message(e.message,true));};
     document.getElementById('cerrar-detalle').onclick=()=>{showHistory();document.getElementById('titulo-historial').focus();load().catch(e=>message(e.message,true));};
     window.tecnovaTickets={load,open,current:()=>current};window.tecnovaSections=window.tecnovaSections||{};window.tecnovaSections.tickets=()=>{showHistory();return load();};
+    document.addEventListener('DOMContentLoaded',()=>navigate(admin?'tickets':'crear').catch(e=>message(e.message,true)));
 }());
