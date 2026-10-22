@@ -1,15 +1,14 @@
 # Tecnova Help Desk
 
-Sistema interno de soporte con ASP.NET MVC 5.3.0, .NET Framework 4.8, SQL Server y JavaScript/Ajax mediante Fetch. Interfaz gris y negra con acentos rojos, menú izquierdo y mensajes/confirmaciones propios. Sin servicios externos de fuentes o imágenes.
+ Proyecto 1 Sistema interno de soporte con ASP.NET MVC 5.3.0, .NET Framework 4.8, SQL Server y JavaScript/Ajax mediante Fetch. 
 
 ## Requisitos
 
 - Windows, Visual Studio 2022 o herramientas de compilación con Desarrollo de ASP.NET y web, .NET Framework 4.8 e IIS Express.
-- SQL Server 2022 Express LocalDB (predeterminado), o una instancia SQL Server compatible. LocalDB tiene persistencia real, no guarda los tickets en Session.
+- SQL Server 2022 Express LocalDB (predeterminado), o una instancia SQL Server compatible. 
 - PowerShell; las pruebas automatizadas requieren PowerShell 7 (`pwsh`).
 - Acceso a NuGet en la primera restauración. Dependencias fijadas en `packages.lock.json`.
 
-VS Code puede utilizarse como editor y terminal. No se ejecuta con Live Server ni `dotnet run`.
 
 ## Instalación desde una descarga limpia
 
@@ -23,13 +22,12 @@ Desde la carpeta que contiene la solución, después de instalar LocalDB desde M
 .\INICIAR.ps1
 ```
 
-`-Configurar` compila el proyecto y ejecuta el unico SQL. En una base sin usuarios se crean un administrador y un empleado de demostracion, ademas de un tecnico sin acceso al sistema. Los accesos se entregan por separado. Si ya hay usuarios, no se agregan estas cuentas ni se modifican sus contrasenas o datos. SQL Server debe estar instalado; este comando no instala el motor. Las cuentas preconfiguradas son exclusivamente para evaluacion local: cambiar las contrasenas y revisar las cuentas antes de cualquier despliegue. Un hash publicado no convierte una cuenta de demostracion en un secreto.
+`-Configurar` compila el proyecto y ejecuta el unico SQL. En una base sin usuarios se crean un administrador y un empleado de demostracion, ademas de un tecnico sin acceso al sistema. .
 
 Abrir **http://localhost:51843/Cuenta/Login**. Ctrl+C detiene IIS Express si se inició desde la terminal. Para reiniciar: `./INICIAR.ps1`. Para otro puerto: `./INICIAR.ps1 -Puerto 51844`.
 
-**Alternativa desde SQL Server Management Studio:** conectarse a `(localdb)\MSSQLLocalDB`, abrir `Database/CrearBaseDatos.sql` y ejecutar el archivo completo. Crea `TecnovaHelpDesk` y las seis tablas: Usuarios, Tickets, Comentarios, EstadosTicket, Tecnicos e HistorialAtencion. El mismo archivo incluye los registros de demostracion para una base vacia; no es necesario otro script de administrador. No contiene las contrasenas en texto plano, sino hashes compatibles con la aplicacion. No es un migrador de esquemas ajenos: usar una base nueva con ese nombre o el esquema de Tecnova.
 
-Para SQL Server completo: `INICIAR.ps1 -Configurar -Servidor 'SERVIDOR\INSTANCIA'` y ajustar `connectionStrings/Tecnova` en Web.config a esa instancia. Se recomienda autenticación integrada de Windows. No publicar credenciales de SQL en Git. El proceso de IIS debe tener acceso a la base; LocalDB se usa desde IIS Express bajo el usuario que la creó. No se incluyen MDF/LDF ni copias de seguridad. Para compilar sin configurar ni iniciar el servidor: `INICIAR.ps1 -SoloCompilar`.
+Para SQL Server completo: `INICIAR.ps1 -Configurar -Servidor 'SERVIDOR\INSTANCIA'` y ajustar `connectionStrings/Tecnova` en Web.config a esa instancia. Se recomienda autenticación integrada de Windows. 
 
 ## Roles y funcionamiento
 
@@ -49,7 +47,6 @@ El menú separa **Crear ticket** (formulario) e **Historial de solicitudes** (li
 
 PBKDF2-HMAC-SHA256 con salt aleatorio y 600.000 iteraciones. Cookies HttpOnly/SameSite=Lax, vencimiento de 30 minutos sin renovación deslizante. Cinco fallos bloquean la cuenta 15 minutos. Autorización por rol/propiedad en servidor, tokens antifalsificación en POST, SQL parametrizado, salida textual segura y rowversion para rechazar versiones antiguas. Cambiar/restablecer contraseña invalida cookies previas.
 
-HTTP es exclusivo de pruebas locales. Publicar requiere HTTPS/cookies Secure, secretos protegidos, permisos mínimos SQL, respaldos, auditoría y controles adicionales de acceso/limitación de solicitudes. No ingresar datos sensibles. No se garantiza idempotencia de reintentos de red: ante una respuesta incierta, consultar antes de repetir una creación.
 
 ## Pruebas
 
