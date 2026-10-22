@@ -13,23 +13,23 @@ VS Code puede utilizarse como editor y terminal. No se ejecuta con Live Server n
 
 ## Instalación desde una descarga limpia
 
-Desde la carpeta que contiene la solución, después de instalar LocalDB desde Microsoft:
+La carpeta `Database` contiene un solo archivo: **CrearBaseDatos.sql**, con todas las tablas, relaciones, índices, estados iniciales y comprobaciones. No hace falta ejecutar otros archivos SQL.
+
+Desde la carpeta que contiene la solución, después de instalar LocalDB desde Microsoft, preparar la aplicación:
 
 ```powershell
 & 'C:\Program Files\Microsoft SQL Server\160\Tools\Binn\SqlLocalDB.exe' start MSSQLLocalDB
-.\Database\Instalar.ps1
-.\INICIAR.ps1 -SoloCompilar
-.\Database\CrearAdministrador.ps1 -Nombre 'Administrador' -Email 'admin@empresa.local'
+.\INICIAR.ps1 -Configurar
 .\INICIAR.ps1
 ```
 
-El script de administrador pide una contraseña sin mostrarla; exige 12–128 caracteres y no modifica un administrador existente. No hay contraseña predeterminada. Después del primer acceso se puede cambiar desde **Configuración**.
+`-Configurar` compila el proyecto y ejecuta el unico SQL. En una base sin usuarios se crean un administrador y un empleado de demostracion, ademas de un tecnico sin acceso al sistema. Los accesos se entregan por separado. Si ya hay usuarios, no se agregan estas cuentas ni se modifican sus contrasenas o datos. SQL Server debe estar instalado; este comando no instala el motor. Las cuentas preconfiguradas son exclusivamente para evaluacion local: cambiar las contrasenas y revisar las cuentas antes de cualquier despliegue. Un hash publicado no convierte una cuenta de demostracion en un secreto.
 
 Abrir **http://localhost:51843/Cuenta/Login**. Ctrl+C detiene IIS Express si se inició desde la terminal. Para reiniciar: `./INICIAR.ps1`. Para otro puerto: `./INICIAR.ps1 -Puerto 51844`.
 
-`Database/001_CrearBase.sql` también puede ejecutarse en SQL Server Management Studio. Crea `TecnovaHelpDesk` y Usuarios, Tickets, Comentarios y EstadosTicket con claves primarias/foráneas, restricciones e índices. No elimina ni reinicializa datos existentes. No es un migrador de cualquier esquema previo: usar una base nueva con ese nombre o el esquema de este proyecto. Ejecuta después `003_PersonalSoporte.sql` para incorporar técnicos e historial. `002_Verificar.sql` comprueba estados y relaciones del esquema actualizado.
+**Alternativa desde SQL Server Management Studio:** conectarse a `(localdb)\MSSQLLocalDB`, abrir `Database/CrearBaseDatos.sql` y ejecutar el archivo completo. Crea `TecnovaHelpDesk` y las seis tablas: Usuarios, Tickets, Comentarios, EstadosTicket, Tecnicos e HistorialAtencion. El mismo archivo incluye los registros de demostracion para una base vacia; no es necesario otro script de administrador. No contiene las contrasenas en texto plano, sino hashes compatibles con la aplicacion. No es un migrador de esquemas ajenos: usar una base nueva con ese nombre o el esquema de Tecnova.
 
-Para SQL Server completo: `Database/Instalar.ps1 -Servidor 'SERVIDOR\INSTANCIA'` y ajustar `connectionStrings/Tecnova` en Web.config. Se recomienda autenticación integrada de Windows. No publicar credenciales de SQL en Git. El proceso de IIS debe tener acceso a la base; LocalDB se usa desde IIS Express bajo el usuario que la creó. No se incluyen MDF/LDF ni copias de seguridad.
+Para SQL Server completo: `INICIAR.ps1 -Configurar -Servidor 'SERVIDOR\INSTANCIA'` y ajustar `connectionStrings/Tecnova` en Web.config a esa instancia. Se recomienda autenticación integrada de Windows. No publicar credenciales de SQL en Git. El proceso de IIS debe tener acceso a la base; LocalDB se usa desde IIS Express bajo el usuario que la creó. No se incluyen MDF/LDF ni copias de seguridad. Para compilar sin configurar ni iniciar el servidor: `INICIAR.ps1 -SoloCompilar`.
 
 ## Roles y funcionamiento
 
@@ -56,9 +56,12 @@ HTTP es exclusivo de pruebas locales. Publicar requiere HTTPS/cookies Secure, se
 Con IIS Express iniciado:
 
 ```powershell
+pwsh -File .\Tests\Esquema.ps1
 pwsh -File .\Tests\Integracion.ps1
 .\Tests\Inicio.ps1
 ```
+
+Esquema crea una base temporal con nombre unico, verifica las seis tablas, ocho relaciones y datos de demostracion, repite la instalacion para comprobar que conserva los cambios y elimina unicamente esa base temporal. No modifica TecnovaHelpDesk.
 
 Integracion crea cuentas temporales y tickets, comprueba autenticación, roles, baja, CRUD, propiedad, concurrencia, comentarios, estados, búsqueda y reportes; elimina solamente sus registros al terminar. Usa LocalDB y la base predeterminada: adaptar su conexión si se cambia Web.config. Es normal que aumenten los identificadores tras las pruebas. No sustituye una auditoría de seguridad/carga ni revisión visual.
 
@@ -70,16 +73,17 @@ Integracion crea cuentas temporales y tickets, comprueba autenticación, roles, 
 - `Security`: hashes y verificación de cuenta/rol por solicitud.
 - `Views`: vistas y parciales Razor.
 - `Scripts`: Ajax y actualización textual del DOM.
-- `Database`: creación/verificación de esquema y administrador inicial.
+- `Database/CrearBaseDatos.sql`: creación y verificación de todo el esquema.
+- `INICIAR.ps1`: compilación, configuración inicial y arranque de IIS Express.
 
-Limitaciones: sin adjuntos, correo, recuperación automática de contraseña, auditoría de cambios generales fuera de la atención, notificaciones en tiempo real ni alta de administradores desde la interfaz. El administrador restablece contraseñas de empleados; el primero se configura localmente. La persistencia no depende de mantener la sesión ni el navegador abiertos.
+Limitaciones: sin adjuntos, correo, recuperación automática de contraseña, auditoría de cambios generales fuera de la atención, notificaciones en tiempo real ni alta de administradores desde la interfaz. El administrador restablece contraseñas de empleados; una base vacia recibe las cuentas de demostracion. La persistencia no depende de mantener la sesión ni el navegador abiertos.
 ### Personal de soporte y atención
 
 El administrador registra técnicos (nombre y correo) desde **Personal de soporte**. No son cuentas de acceso ni un tercer rol. Puede asignar un técnico activo o asignarse a sí mismo. Asignar no inicia la atención: se utiliza después **Iniciar atención**, luego se registra la solución y finalmente se cierra el ticket.
 
 El historial conserva el nombre del responsable y del administrador que registró cada asignación o cambio de estado. No se reconstruyen acciones anteriores a esta actualización. Para dar de baja a un técnico con tickets abiertos o en proceso, primero hay que reasignarlos. Los registros resueltos y cerrados se conservan.
 
-Ejecuta `Database/Instalar.ps1` para instalar o actualizar una base existente: aplica también `003_PersonalSoporte.sql`, de forma idempotente y sin eliminar datos. Se mantiene `IdUsuarioAsignado` para la autoasignación del administrador y se añade `IdTecnicoAsignado`; no pueden coexistir ambos responsables en un ticket.
+El único SQL incluye personal de soporte e historial y puede repetirse sin eliminar datos del esquema existente. Se mantiene `IdUsuarioAsignado` para la autoasignación del administrador y `IdTecnicoAsignado` para técnicos; no pueden coexistir ambos responsables en un ticket.
 
 El administrador inicia en el historial y no muestra la opción Crear ticket en su menú. En tickets resueltos no se agregan comentarios nuevos: cada autor puede corregir sus propios comentarios antes del cierre. Los tickets cerrados son de solo lectura. La edición valida la versión del ticket para evitar sobrescribir cambios concurrentes.
 
