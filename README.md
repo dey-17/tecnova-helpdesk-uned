@@ -1,13 +1,14 @@
 # Tecnova Help Desk
 
  Proyecto 1 Sistema interno de soporte con ASP.NET MVC 5.3.0, .NET Framework 4.8, SQL Server y JavaScript/Ajax mediante Fetch. 
-
+ 
 ## Requisitos
 
 - Windows, Visual Studio 2022 o herramientas de compilación con Desarrollo de ASP.NET y web, .NET Framework 4.8 e IIS Express.
 - SQL Server 2022 Express LocalDB (predeterminado), o una instancia SQL Server compatible. 
 - PowerShell; las pruebas automatizadas requieren PowerShell 7 (`pwsh`).
 - Acceso a NuGet en la primera restauración. Dependencias fijadas en `packages.lock.json`.
+- Los usuarios y contraseñas se entregan en el trabajo escrito exactamente en la pagina 05.
 
 
 ## Instalación desde una descarga limpia
