@@ -15,11 +15,35 @@ VS Code puede utilizarse como editor y terminal. No se ejecuta con Live Server n
 
 La carpeta `Database` contiene un solo archivo: **CrearBaseDatos.sql**, con todas las tablas, relaciones, índices, estados iniciales y comprobaciones. No hace falta ejecutar otros archivos SQL.
 
-Desde la carpeta que contiene la solución, después de instalar LocalDB desde Microsoft, preparar la aplicación:
+### 1. Descargar y abrir el proyecto
+
+En GitHub seleccionar **Code → Download ZIP** y descomprimir el archivo. En VS Code seleccionar **Archivo → Abrir carpeta** y abrir la carpeta que contiene `INICIAR.ps1`, `Tecnova.HelpDesk.sln` y `README.md`, no la carpeta superior ni el ZIP. Abrir **Terminal → Nueva terminal** con PowerShell.
+
+El ZIP contiene el código y el script de la base, **no instala SQL Server, Visual Studio ni las herramientas de compilación**. Comprobar primero los requisitos anteriores. La extensión de C# de VS Code no sustituye esas herramientas.
+
+### 2. Iniciar LocalDB
+
+Si se utiliza SQL Server 2022 Express LocalDB, ejecutar:
 
 ```powershell
 & 'C:\Program Files\Microsoft SQL Server\160\Tools\Binn\SqlLocalDB.exe' start MSSQLLocalDB
+```
+
+La ruta corresponde a LocalDB 2022. Si no existe, comprobar la instalación y su ruta; no significa que falte el archivo SQL del proyecto. Para otra instancia SQL Server, consultar la alternativa indicada más abajo.
+
+### 3. Preparar la aplicación y la base
+
+Desde la carpeta del proyecto, ejecutar y esperar a que termine sin errores:
+
+```powershell
 .\INICIAR.ps1 -Configurar
+```
+
+Este paso restaura las dependencias desde NuGet, compila y ejecuta `Database/CrearBaseDatos.sql`. Si falla, resolver el error antes de continuar con el inicio.
+
+### 4. Iniciar el servidor y acceder
+
+```powershell
 .\INICIAR.ps1
 ```
 
@@ -27,9 +51,49 @@ Desde la carpeta que contiene la solución, después de instalar LocalDB desde M
 
 Abrir **http://localhost:51843/Cuenta/Login**. Ctrl+C detiene IIS Express si se inició desde la terminal. Para reiniciar: `./INICIAR.ps1`. Para otro puerto: `./INICIAR.ps1 -Puerto 51844`.
 
+Mantener la terminal abierta mientras se utiliza el sistema. Ingresar con los accesos de demostración entregados por separado si se preparó una base sin usuarios. El administrador puede registrar empleados desde **Agregar empleados**. Los nuevos usuarios y tickets se guardan en la instancia SQL configurada, no en GitHub.
+
+Descargar el código en otra carpeta o cambiar el puerto **no crea una base independiente**: si la cadena de conexión apunta a la misma instancia y a `TecnovaHelpDesk`, las copias utilizan los mismos datos y cuentas existentes.
+
 **Alternativa desde SQL Server Management Studio:** conectarse a `(localdb)\MSSQLLocalDB`, abrir `Database/CrearBaseDatos.sql` y ejecutar el archivo completo. Crea `TecnovaHelpDesk` y las seis tablas: Usuarios, Tickets, Comentarios, EstadosTicket, Tecnicos e HistorialAtencion. El mismo archivo incluye los registros de demostracion para una base vacia; no es necesario otro script de administrador. No contiene las contrasenas en texto plano, sino hashes compatibles con la aplicacion. No es un migrador de esquemas ajenos: usar una base nueva con ese nombre o el esquema de Tecnova.
 
 Para SQL Server completo: `INICIAR.ps1 -Configurar -Servidor 'SERVIDOR\INSTANCIA'` y ajustar `connectionStrings/Tecnova` en Web.config a esa instancia. Se recomienda autenticación integrada de Windows. No publicar credenciales de SQL en Git. El proceso de IIS debe tener acceso a la base; LocalDB se usa desde IIS Express bajo el usuario que la creó. No se incluyen MDF/LDF ni copias de seguridad. Para compilar sin configurar ni iniciar el servidor: `INICIAR.ps1 -SoloCompilar`.
+
+## Solución de problemas de instalación
+
+### No se puede cargar el índice de servicio de NuGet
+
+Si el mensaje menciona `https://api.nuget.org/v3/index.json`, la restauración no pudo acceder al origen de dependencias. No es un error de SQL Server ni demuestra que falte una extensión de VS Code. Comprobar el acceso a esa dirección desde el navegador y la conexión a Internet. Si el acceso está bloqueado por la red, revisar con su administrador la configuración de proxy o firewall; no desactivar las protecciones del equipo.
+
+Cuando la conexión funcione, repetir `./INICIAR.ps1 -Configurar`. Si persiste, conservar el mensaje completo: que la URL abra en el navegador no garantiza que NuGet utilice la misma configuración de red.
+
+### El puerto 51843 ya está ocupado
+
+Puede haber otra ejecución del sistema u otro servicio utilizando ese puerto. Detener la ejecución anterior con **Ctrl+C en su propia terminal**, si se identifica, o iniciar esta copia en otro puerto libre:
+
+```powershell
+.\INICIAR.ps1 -Puerto 51844
+```
+
+En ese caso abrir **http://localhost:51844/Cuenta/Login**. No terminar procesos desconocidos. Cambiar el puerto no cambia ni repara la base de datos.
+
+### Cannot create file porque TecnovaHelpDesk.mdf ya existe
+
+El archivo físico existe, pero la instancia puede no tener registrada la base con ese nombre. También puede pertenecer a otra instancia. **No borrar ni sobrescribir archivos MDF o LDF**: podrían contener datos anteriores.
+
+En SQL Server Management Studio, conectarse a la misma instancia configurada por la aplicación y revisar **Bases de datos**. Identificar a qué base e instancia pertenecen los archivos. Si corresponde recuperar una base desconectada, conservar primero una copia válida de sus archivos y realizar la operación de adjuntar con asistencia de quien administra SQL Server. No intentar adjuntar archivos que otra instancia esté utilizando. El script no elimina ni reconecta automáticamente archivos existentes.
+
+### No se puede conectar a LocalDB o abrir TecnovaHelpDesk
+
+Comprobar que LocalDB esté instalado, que `MSSQLLocalDB` pueda iniciarse y que `INICIAR.ps1 -Configurar` haya terminado correctamente. Ejecutar IIS Express con el mismo usuario de Windows que preparó LocalDB. Para SQL Server completo, comprobar que el servidor usado al configurar coincida con `connectionStrings/Tecnova` en `Tecnova.HelpDesk/Web.config` y que ese usuario tenga acceso a la base.
+
+### No se encuentra MSBuild, IIS Express o .NET Framework
+
+Completar los componentes indicados en **Requisitos** desde el instalador de Visual Studio. VS Code es el editor, no el compilador ni el servidor. No sustituir este proyecto por Live Server o `dotnet run`. Después comprobar la compilación con `./INICIAR.ps1 -SoloCompilar`.
+
+### Las cuentas de demostración no permiten ingresar
+
+Las cuentas se insertan solo cuando `Usuarios` está vacía. Si se reutiliza una base que ya tiene usuarios, utilizar sus credenciales actuales: ejecutar el SQL de nuevo no cambia contraseñas ni agrega las cuentas demo. Si se necesita probar desde cero, preparar un entorno separado; no borrar la base existente sin respaldo.
 
 ## Roles y funcionamiento
 
